@@ -54,14 +54,16 @@ def main():
     # You need to format the dataset appropriately. For SNLI, you can prepare a file with each line containing one
     # example as follows:
     # {"premise": "Two women are embracing.", "hypothesis": "The sisters are hugging.", "label": 1}
-    if args.dataset.endswith('.json') or args.dataset.endswith('.jsonl'):
-        dataset_id = None
-        # Load from local json/jsonl file
-        dataset = datasets.load_dataset('json', data_files=args.dataset)
-        # By default, the "json" dataset loader places all examples in the train split,
-        # so if we want to use a jsonl file for evaluation we need to get the "train" split
-        # from the loaded dataset
-        eval_split = 'train'
+    if args.dataset != None:
+       if args.dataset.endswith('.json') or args.dataset.endswith('.jsonl'):
+
+          dataset_id = None
+          # Load from local json/jsonl file
+          dataset = datasets.load_dataset('json', data_files=args.dataset)
+          # By default, the "json" dataset loader places all examples in the train split,
+          # so if we want to use a jsonl file for evaluation we need to get the "train" split
+          # from the loaded dataset
+          eval_split = 'train'
     else:
         default_datasets = {'qa': ('squad',), 'nli': ('snli',)}
         dataset_id = tuple(args.dataset.split(':')) if args.dataset is not None else \
@@ -70,7 +72,7 @@ def main():
         eval_split = 'validation_matched' if dataset_id == ('glue', 'mnli') else 'validation'
         # Load the raw data
         dataset = datasets.load_dataset(*dataset_id)
-    
+
     # NLI models need to have the output label count specified (label 0 is "entailed", 1 is "neutral", and 2 is "contradiction")
     task_kwargs = {'num_labels': 3} if args.task == 'nli' else {}
 
@@ -97,7 +99,7 @@ def main():
     if dataset_id == ('snli',):
         # remove SNLI examples with no label
         dataset = dataset.filter(lambda ex: ex['label'] != -1)
-    
+
     train_dataset = None
     eval_dataset = None
     train_dataset_featurized = None
@@ -139,7 +141,7 @@ def main():
             predictions=eval_preds.predictions, references=eval_preds.label_ids)
     elif args.task == 'nli':
         compute_metrics = compute_accuracy
-    
+
 
     # This function wraps the compute_metrics function, storing the model's predictions
     # so that they can be dumped along with the computed metrics
