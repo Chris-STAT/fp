@@ -6,6 +6,8 @@ from helpers import prepare_dataset_nli, prepare_train_dataset_qa, \
 import os
 import json
 from transformers import AutoModel
+from squad_adv_mod import *
+from datasets import Dataset
 
 NUM_PREPROCESSING_WORKERS = 2
 
@@ -48,6 +50,9 @@ def main():
     argp.add_argument('--max_eval_samples', type=int, default=None,
                       help='Limit the number of examples to evaluate on.')
 
+    argp.add_argument('--which_validation_data',type=int, default=None,
+                      help='Which dataset to be used.')
+
     training_args, args = argp.parse_args_into_dataclasses()
 
     # Dataset selection
@@ -61,6 +66,47 @@ def main():
     else:
        dataset_train = datasets.load_dataset('squad_adversarial','AddOneSent',split='validation[0:1200]')
        dataset_validation = datasets.load_dataset('squad_adversarial','AddOneSent',split='validation[1200:]')
+
+    train_size = len(dataset_train)
+    validation_size = len(dataset_validation)
+
+    data_train_dict = {'id':[], 'title':[], 'context':[], 'question':[], 'answers':[]}
+    for i in range(train_size):
+        ex = dataset_train[i]
+        ex = rand_insert(ex)
+        data_train_dict['id'].append(ex['id'])
+        data_train_dict['title'].append(ex['title'])
+        data_train_dict['context'].append(ex['context'])
+        data_train_dict['question'].append(ex['question'])
+        data_train_dict['answers'].append(ex['answers'])
+    dataset_train = Dataset.from_dict(data_train_dict)
+
+    data_validation_dict = {'id':[], 'title':[], 'context':[], 'question':[], 'answers':[]}
+    for i in range(validation_size):
+        ex = dataset_validation[i]
+        ex = rand_insert(ex)
+        data_validation_dict['id'].append(ex['id'])
+        data_validation_dict['title'].append(ex['title'])
+        data_validation_dict['context'].append(ex['context'])
+        data_validation_dict['question'].append(ex['question'])
+        data_validation_dict['answers'].append(ex['answers'])
+    dataset_validation_rand = Dataset.from_dict(data_validation_dict)
+
+    data_validation_dict = {'id':[], 'title':[], 'context':[], 'question':[], 'answers':[]}
+    for i in range(validation_size):
+        ex = dataset_validation[i]
+        ex = move_to_the_front(ex)
+        data_validation_dict['id'].append(ex['id'])
+        data_validation_dict['title'].append(ex['title'])
+        data_validation_dict['context'].append(ex['context'])
+        data_validation_dict['question'].append(ex['question'])
+        data_validation_dict['answers'].append(ex['answers'])
+    dataset_validation_front = Dataset.from_dict(data_validation_dict)
+
+    if args.which_validation_data == 'Add_to_front':
+        dataset_validation = dataset_validation_front
+    if args.which_validation_data == 'Rand_insert':
+        dataset_validation = dataset_validation_rand
 
     # Here we select the right model fine-tuning head
 

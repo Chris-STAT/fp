@@ -6,6 +6,8 @@ from helpers import prepare_dataset_nli, prepare_train_dataset_qa, \
 import os
 import json
 from transformers import AutoModel
+from squad_adv_mod import *
+from datasets import Dataset
 
 NUM_PREPROCESSING_WORKERS = 2
 
@@ -62,11 +64,37 @@ def main():
        dataset_train = datasets.load_dataset('squad_adversarial','AddOneSent',split='validation[0:1200]')
        dataset_validation = datasets.load_dataset('squad_adversarial','AddOneSent',split='validation[1200:]')
 
+    train_size = len(dataset_train)
+    validation_size = len(dataset_validation)
+
+    data_train_dict = {'id':[], 'title':[], 'context':[], 'question':[], 'answers':[]}
+    for i in range(train_size):
+        ex = dataset_train[i]
+        ex = move_to_the_front(ex)
+        data_train_dict['id'].append(ex['id'])
+        data_train_dict['title'].append(ex['title'])
+        data_train_dict['context'].append(ex['context'])
+        data_train_dict['question'].append(ex['question'])
+        data_train_dict['answers'].append(ex['answers'])
+    dataset_train = Dataset.from_dict(data_train_dict)
+
+    data_validation_dict = {'id':[], 'title':[], 'context':[], 'question':[], 'answers':[]}
+    for i in range(validation_size):
+        ex = dataset_validation[i]
+        ex = move_to_the_front(ex)
+        data_validation_dict['id'].append(ex['id'])
+        data_validation_dict['title'].append(ex['title'])
+        data_validation_dict['context'].append(ex['context'])
+        data_validation_dict['question'].append(ex['question'])
+        data_validation_dict['answers'].append(ex['answers'])
+    dataset_validation = Dataset.from_dict(data_validation_dict)
+
+
     # Here we select the right model fine-tuning head
 
     model_class = AutoModelForQuestionAnswering
     # Initialize the model and tokenizer from the specified pretrained model/checkpoint
-    model = AutoModel.from_pretrained('/content/drive/MyDrive/fp/output',local_files_only=True)
+    model = AutoModel.from_pretrained('/content/drive/MyDrive/fp/output_2',local_files_only=True)
     tokenizer = AutoTokenizer.from_pretrained('google/electra-small-discriminator', use_fast=True)
 
     # Select the dataset preprocessing function (these functions are defined in helpers.py)
