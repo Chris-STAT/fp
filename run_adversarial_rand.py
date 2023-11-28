@@ -107,7 +107,8 @@ def main():
         dataset_validation = dataset_validation_front
     if args.which_validation_data == 'Rand_insert':
         dataset_validation = dataset_validation_rand
-
+    if args.which_validation_data == 'oringinal':
+        dataset_validation = datasets.load_dataset('squad')['validation']
     # Here we select the right model fine-tuning head
 
     model_class = AutoModelForQuestionAnswering
