@@ -6,6 +6,8 @@ from helpers import prepare_dataset_nli, prepare_train_dataset_qa, \
 import os
 import json
 from transformers import AutoModel
+from squad_adv_mod import *
+from datasets import Dataset
 
 NUM_PREPROCESSING_WORKERS = 2
 
@@ -47,8 +49,7 @@ def main():
                       help='Limit the number of examples to train on.')
     argp.add_argument('--max_eval_samples', type=int, default=None,
                       help='Limit the number of examples to evaluate on.')
-    argp.add_argument('--which_validation_data',type=str, default=None,
-                      help='Which dataset to be used.')
+
     training_args, args = argp.parse_args_into_dataclasses()
 
     # Dataset selection
@@ -62,14 +63,38 @@ def main():
     else:
        dataset_train = datasets.load_dataset('squad_adversarial','AddOneSent',split='validation[0:1200]')
        dataset_validation = datasets.load_dataset('squad_adversarial','AddOneSent',split='validation[1200:]')
-    
-    if args.which_validation_data == 'oringinal':
-        dataset_validation = datasets.load_dataset('squad')['validation']
+
+    train_size = len(dataset_train)
+    validation_size = len(dataset_validation)
+
+    data_train_dict = {'id':[], 'title':[], 'context':[], 'question':[], 'answers':[]}
+    for i in range(train_size):
+        ex = dataset_train[i]
+        ex = move_to_the_front(ex)
+        data_train_dict['id'].append(ex['id'])
+        data_train_dict['title'].append(ex['title'])
+        data_train_dict['context'].append(ex['context'])
+        data_train_dict['question'].append(ex['question'])
+        data_train_dict['answers'].append(ex['answers'])
+    dataset_train = Dataset.from_dict(data_train_dict)
+
+    data_validation_dict = {'id':[], 'title':[], 'context':[], 'question':[], 'answers':[]}
+    for i in range(validation_size):
+        ex = dataset_validation[i]
+        ex = move_to_the_front(ex)
+        data_validation_dict['id'].append(ex['id'])
+        data_validation_dict['title'].append(ex['title'])
+        data_validation_dict['context'].append(ex['context'])
+        data_validation_dict['question'].append(ex['question'])
+        data_validation_dict['answers'].append(ex['answers'])
+    dataset_validation = Dataset.from_dict(data_validation_dict)
+
+
     # Here we select the right model fine-tuning head
 
     model_class = AutoModelForQuestionAnswering
     # Initialize the model and tokenizer from the specified pretrained model/checkpoint
-    model = model_class.from_pretrained('/content/drive/MyDrive/fp_2/output',local_files_only=True)
+    model = model_class.from_pretrained('/content/drive/MyDrive/fp_2/output_AddSent_train',local_files_only=True)
     tokenizer = AutoTokenizer.from_pretrained('google/electra-small-discriminator', use_fast=True)
 
     # Select the dataset preprocessing function (these functions are defined in helpers.py)

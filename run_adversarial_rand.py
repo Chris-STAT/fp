@@ -50,6 +50,9 @@ def main():
     argp.add_argument('--max_eval_samples', type=int, default=None,
                       help='Limit the number of examples to evaluate on.')
 
+    argp.add_argument('--which_validation_data',type=str, default=None,
+                      help='Which dataset to be used.')
+
     training_args, args = argp.parse_args_into_dataclasses()
 
     # Dataset selection
@@ -70,7 +73,7 @@ def main():
     data_train_dict = {'id':[], 'title':[], 'context':[], 'question':[], 'answers':[]}
     for i in range(train_size):
         ex = dataset_train[i]
-        ex = move_to_the_front(ex)
+        ex = rand_insert(ex)
         data_train_dict['id'].append(ex['id'])
         data_train_dict['title'].append(ex['title'])
         data_train_dict['context'].append(ex['context'])
@@ -81,20 +84,35 @@ def main():
     data_validation_dict = {'id':[], 'title':[], 'context':[], 'question':[], 'answers':[]}
     for i in range(validation_size):
         ex = dataset_validation[i]
+        ex = rand_insert(ex)
+        data_validation_dict['id'].append(ex['id'])
+        data_validation_dict['title'].append(ex['title'])
+        data_validation_dict['context'].append(ex['context'])
+        data_validation_dict['question'].append(ex['question'])
+        data_validation_dict['answers'].append(ex['answers'])
+    dataset_validation_rand = Dataset.from_dict(data_validation_dict)
+
+    data_validation_dict = {'id':[], 'title':[], 'context':[], 'question':[], 'answers':[]}
+    for i in range(validation_size):
+        ex = dataset_validation[i]
         ex = move_to_the_front(ex)
         data_validation_dict['id'].append(ex['id'])
         data_validation_dict['title'].append(ex['title'])
         data_validation_dict['context'].append(ex['context'])
         data_validation_dict['question'].append(ex['question'])
         data_validation_dict['answers'].append(ex['answers'])
-    dataset_validation = Dataset.from_dict(data_validation_dict)
+    dataset_validation_front = Dataset.from_dict(data_validation_dict)
 
+    if args.which_validation_data == 'Add_to_front':
+        dataset_validation = dataset_validation_front
+    if args.which_validation_data == 'Rand_insert':
+        dataset_validation = dataset_validation_rand
 
     # Here we select the right model fine-tuning head
 
     model_class = AutoModelForQuestionAnswering
     # Initialize the model and tokenizer from the specified pretrained model/checkpoint
-    model = AutoModel.from_pretrained('/content/drive/MyDrive/fp/output_2',local_files_only=True)
+    model = model_class.from_pretrained('/content/drive/MyDrive/fp_2/output',local_files_only=True)
     tokenizer = AutoTokenizer.from_pretrained('google/electra-small-discriminator', use_fast=True)
 
     # Select the dataset preprocessing function (these functions are defined in helpers.py)
