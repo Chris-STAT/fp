@@ -63,6 +63,9 @@ def main():
        dataset_train = datasets.load_dataset('squad_adversarial','AddOneSent',split='validation[0:1200]')
        dataset_validation = datasets.load_dataset('squad_adversarial','AddOneSent',split='validation[1200:]')
 
+    train_size = len(dataset_train)
+    validation_size = len(dataset_validation)
+
     data_validation_dict = {'id':[], 'title':[], 'context':[], 'question':[], 'answers':[]}
     for i in range(validation_size):
         ex = dataset_validation[i]
