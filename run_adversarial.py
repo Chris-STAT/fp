@@ -62,9 +62,36 @@ def main():
     else:
        dataset_train = datasets.load_dataset('squad_adversarial','AddOneSent',split='validation[0:1200]')
        dataset_validation = datasets.load_dataset('squad_adversarial','AddOneSent',split='validation[1200:]')
-    
+
+    data_validation_dict = {'id':[], 'title':[], 'context':[], 'question':[], 'answers':[]}
+    for i in range(validation_size):
+        ex = dataset_validation[i]
+        ex = rand_insert(ex)
+        data_validation_dict['id'].append(ex['id'])
+        data_validation_dict['title'].append(ex['title'])
+        data_validation_dict['context'].append(ex['context'])
+        data_validation_dict['question'].append(ex['question'])
+        data_validation_dict['answers'].append(ex['answers'])
+    dataset_validation_rand = Dataset.from_dict(data_validation_dict)
+
+    data_validation_dict = {'id':[], 'title':[], 'context':[], 'question':[], 'answers':[]}
+    for i in range(validation_size):
+        ex = dataset_validation[i]
+        ex = move_to_the_front(ex)
+        data_validation_dict['id'].append(ex['id'])
+        data_validation_dict['title'].append(ex['title'])
+        data_validation_dict['context'].append(ex['context'])
+        data_validation_dict['question'].append(ex['question'])
+        data_validation_dict['answers'].append(ex['answers'])
+    dataset_validation_front = Dataset.from_dict(data_validation_dict)
+
+    if args.which_validation_data == 'Add_to_front':
+        dataset_validation = dataset_validation_front
+    if args.which_validation_data == 'Rand_insert':
+        dataset_validation = dataset_validation_rand
     if args.which_validation_data == 'oringinal':
         dataset_validation = datasets.load_dataset('squad')['validation']
+
     # Here we select the right model fine-tuning head
 
     model_class = AutoModelForQuestionAnswering
