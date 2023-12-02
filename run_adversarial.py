@@ -6,6 +6,8 @@ from helpers import prepare_dataset_nli, prepare_train_dataset_qa, \
 import os
 import json
 from transformers import AutoModel
+from squad_adv_mod import *
+from datasets import Dataset
 
 NUM_PREPROCESSING_WORKERS = 2
 
